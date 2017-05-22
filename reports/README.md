@@ -41,7 +41,7 @@ Adversarial Success на выборке из 3200 предложений (ROC-AU
 
 <img src='https://s9.postimg.org/n8ogtuwq7/2017-05-22_19.01.03.png' 
 alt='attention visualization' 
-title='attention' width=600 />
+title='attention' width=700 height=350 />
 
 
 |  Reward  | Phrase 
@@ -64,13 +64,15 @@ title='InfoGAN losses' width=600 />
 ## Количество правильных ответов на вопрос "What is your name ?"
 
 1.
-| Угаданные имена | Ответ
-|'president'      | "it ' s the president of wall - mart . at south park elementary . the second was a hit"
-|'scott'          | "my name . . . called scott , but my dad isn ' t even legal anymore ?"
+| Угаданные имена | Ответ 
+|-----------------|-------
+|'president'      | "it ' s the president of wall - mart . at south park elementary . the second was a hit"|
+|'scott'          | "my name . . . called scott , but my dad isn ' t even legal anymore ?"|
 
 2.
 (Плохо)
 |Угаданные имена| Ответ
+|---------------|-------
 |'m'            | "ooo stan marsh . a what are his name kyle gints ? i ' m sure as soon as filmore"
 |'man'          | 'hi fellas . i wanna go home . y - you gotta come meet the white man . get your' 
 |'timmy'        | 'boooo ! ! show us what senator spears ? ! fudge said , timmy timmy timmy russell fan flying disciprine'
@@ -79,6 +81,7 @@ title='InfoGAN losses' width=600 />
 
 4.
 |Угаданные имена | Ответ                                                                               | Прим.
+|----------------|-------------------------------------------------------------------------------------|------
 |'m'             | "my name is _UNK_ , and i ' m harry potter . i ' m the little boy . but"            | -
 |'kyle'          | 'kyle .'                                                                            | Ок
 |'snooki'        | 'snooki .'                                                                          | Ок
