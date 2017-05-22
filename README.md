@@ -1,2 +1,3 @@
 # diploma-dialog-models
-"Improving speaker consistency  in neural conversation models with adversarial approach."
+
+My bachelor's degree thesis on improving speaker consistency  in neural conversation models with adversarial approach.
