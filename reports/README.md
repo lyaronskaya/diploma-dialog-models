@@ -41,7 +41,7 @@ Adversarial Success на выборке из 3200 предложений (ROC-AU
 
 <img src='https://s9.postimg.org/n8ogtuwq7/2017-05-22_19.01.03.png' 
 alt='attention visualization' 
-title='attention' width=700 height=350 />
+title='attention' width=700  />
 
 
 |  Reward  | Phrase 
@@ -71,6 +71,7 @@ title='InfoGAN losses' width=600 />
 
 2.
 (Плохо)
+
 |Угаданные имена| Ответ
 |---------------|-------
 |'m'            | "ooo stan marsh . a what are his name kyle gints ? i ' m sure as soon as filmore"
