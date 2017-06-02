@@ -1,0 +1,261 @@
+\documentclass{beamer}
+\usepackage[cp1251]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,mathrsfs,mathtext}
+\usepackage{graphicx, epsfig}
+\usetheme{Warsaw}%{Singapore}%{Warsaw}%{Warsaw}%{Darmstadt}
+\usecolortheme{sidebartab}
+\definecolor{beamer@blendedblue}{RGB}{30,80,110}
+%----------------------------------------------------------------------------------------------------------
+\title[\hbox to 56mm{\hfill\insertframenumber\,/\,\inserttotalframenumber}]
+{ Improving speaker consistency  in neural\\ conversational models with adversarial approach.}
+\author[Л.\,М. Яронская]{\large \\Любовь Михайловна Яронская}
+\institute{\large
+Московский физико-технический институт}
+
+%\date{\footnotesize{\emph{Курс:} Численные методы обучения по прецедентам\par (практика, В.\,В. Стрижов)/Группа YAD16, весна 2016}}
+%----------------------------------------------------------------------------------------------------------
+\begin{document}
+%----------------------------------------------------------------------------------------------------------
+\begin{frame}
+%\thispagestyle{empty}
+\titlepage
+\end{frame}
+
+
+%----------------------------------------------------------------------------------------------------------
+
+
+%----------------------------------------------------------------------------------------------------------
+\begin{frame}{Диалоговая модель}
+
+\begin{itemize}
+\item $X - (x_1, x_2, \dots, x_t)$ - входная последовательность токенов,
+
+$Y - (y_1, y_2, \dots, y_{n_y})$ - выходная последовательность токенов.
+
+\item LSTM задает распределение $P(Y|X) = \prod_{t=1}^{n_y}p(y_t | x_1, \dots, x_t, y_1, \dots, y_{t-1}) = \prod_{t=1}^{n_y}\frac{\exp(f(h_{t-1}, e_{y_t}))}{\sum_{y'}\exp(f(h_{t-1}, e_{y_t}))}$
+\item Общие ответы: 'I don't know.', 'Of course.'. 
+
+Решение: $max( logP(R|M) + logP(M|R)) $.
+\item Пример несогласованности ответов:
+\end{itemize}
+
+\begin{figure}[ht]
+
+  \includegraphics[width=0.55\textwidth]{images/seq2seq_new.png}
+   %\includegraphics[width=0.5\textwidth]{images/entity_results.png}
+ 
+\end{figure}
+
+\end{frame}
+%-----------------------------------------------------------------------------
+\begin{frame}{A persona-based neural conversational model (Jiwei Li et al., 2016)}
+\begin{figure}[ht]
+	\includegraphics[width=1.\textwidth]{images/PersonaBased.png}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Несогласованность ответов в persona-based model}
+\begin{figure}[ht]
+	\includegraphics[width=0.55\textwidth]{images/entity_results_new2.png}
+	%\includegraphics[width=0.55\textwidth]{images/user2.png}
+\end{figure}
+
+\end{frame}
+%-----------------------------------------------------------------------------
+%-----------------------------------------------------------------------------------------------------
+\begin{frame}{Цель работы}
+
+Исследовать согласованность ответов диалоговой модели с применением соперничающих нейронных сетей.
+
+\begin{block}{Проблемы}
+Малый объем данных для обучения.
+
+Неконсистентность ответов как следствие максимизации правдоподобия.
+
+\end{block}
+\begin{block}{Предположения}
+
+RL дообучение. 
+
+Модели с латентными переменными лучше борются с двусмысленностью и неопределенностью.
+
+\end{block}
+\end{frame}
+
+\begin{frame}{GAN для генерации последовательностей}
+
+%\begin{figure}[ht]
+%\includegraphics[width=0.7\textwidth]{images/seqGAN.png}
+%\end{figure}
+
+\begin{itemize}
+	\item Две модели - генератор G и дискриминатор D.
+	\item D обучается различать реальные данные от сгенерированных, генератор обучается обманывать генератор, порождая данные очень хорошего качества 
+	\item Обучение параметров дискриминатора $D_\phi$: $max_\phi ( E_{Y\sim p_{data}} log( D_\phi(Y)) + E_{Y\sim G_\theta}log(1 - D_\phi(Y)))$.
+
+\item Обучение параметров генератора по policy gradient: $\nabla J = E_{X \sim p_{data}}E_{Y\sim G(Y|X)} \nabla log G(Y|X) \cdot (D(Y) - b(X))$, где в качестве бэйзлайна $b(X)$ скор от дискриминатора при жадном семплировании  D(Y_{greedy}).
+
+%\item В момент t: $s = (y_1, y_2, \dots, y_{t-1})$, $a=y_t$, $\pi = G_\theta(y_t | Y_{1:t-1})$
+	%\item Цель генератора $G_\theta$ - максимизировать награду за последовательность $$E(R_T | s_0, \theta) = \sum_{y_1 \in Y} G_\theta(y_1 | s_0) \cdot Q_{D_\phi }^{G_\phi}(s_0, y_1)$$
+\end{itemize}
+
+\end{frame}
+
+\begin{frame} {Добавление максимизации информации}
+В работе [Xi Chen et al., 2016] добавляют регуляризацию на информацию $I(c, G(x, c))$ между скрытыми переменными и ответами генератора.
+
+Оценка сверху:
+$I(c, G(x, c)) \geq E_{c \sim P(c), x \sim G(z, c)} log Q(c | x) + H(c)$.
+
+\begin{block}{}
+Тогда если с - one-hot представление персонажа, то максимизация информации эквивалентна добавлению dense слоя с softmax нелинейностью от предпоследнего слоя дискриминатора и добавлении к функционалу дискриминатора  минимизации кроссэнтропии.
+
+\end{block}
+
+
+
+
+
+\end{frame}
+
+\begin{frame}{Исследуемые модели}
+Дискриминатор:
+\begin{itemize}
+	\item LSTM + Attention
+	\item Input: (Batchsize, 2 $\cdot$ EmbSize, QuestionLength, AnswerLength) + BatchNorm + Conv(3, 3) + MaxPool(2, 2) + Conv(3, 3) + MaxPool(2, 2) 
+	\item предыдущая модель с регуляризацией на информацию
+
+\end{itemize}
+
+\end{frame}
+
+\begin{frame} {Метрики качества}
+\begin{itemize}
+\item $Perplexity = e^{-\frac{1}{N_V} \sum_{n=1}^N log P(U_1, \ldots, U_k)},$ где $N_V$ - мощность словаря, $N$ - количество диалогов в тестовой выборке, $k$ - размер диалога. 
+
+\item Adversarial Success - доля фраз, не распознанных как  сгенерированные.
+\item Количество правильно названных имен
+\item Human evaluation
+\end{itemize}
+\end{frame}
+
+\begin{frame} {Цели эксперимента}
+\begin{itemize}
+\item Сравнить результаты, получаемые использованием соперничающих нейронных сетей с предложенными ранее алгоритмами.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Данные}
+В качестве данных для предобучения дискриминаторов и дообучения генератора использовалась выборка субтитров "South Park" из 80714 фраз и 3194 персонажей. 
+%Из них 2201 имя в 
+
+Валидационная выборка из 3200 фраз.
+
+\end{frame}
+
+\begin{frame}{Сравнение качества полученных моделей}
+
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{lcccl}
+	\cline{1-3}
+		\multicolumn{1}{|c|}{}  & \multicolumn{1}{c|}{AdvSucc} & \multicolumn{1}{|c|}{Perplexity} &\\ \cline{1-3}
+		\multicolumn{1}{|c|}{Baseline} & \multicolumn{1}{c|}{-} &  \multicolumn{1}{c|}{7.96} &  \\ \cline{1-3}
+		\multicolumn{1}{|c|}{LSTM+Att} & \multicolumn{1}{c|}{0.699} &  \multicolumn{1}{c|}{7.65} &\\ \cline{1-3}
+		\multicolumn{1}{|c|}{Conv} & \multicolumn{1}{c|}{0.977} &  \multicolumn{1}{c|}{13.86} \\ \cline{1-3}
+		\multicolumn{1}{|c|}{Conv+Info} & \multicolumn{1}{c|}{0.989} &  \multicolumn{1}{c|}{7.38} \\ \cline{1-3}
+	\end{tabular}
+	%\caption{Значения отрицательного логарифма правдоподобия обученных моделей.}
+	%\label{table_llh}
+\end{table}
+
+
+\end{frame}
+
+\begin{frame}{Визуализация внимания и примеры ревордов}
+
+\begin{figure}[ht]
+\includegraphics[width=0.7\textwidth]{images/attention.png}
+%\caption{Conv + InfoApproximation GAN}
+%\label{answers3}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=0.95\textwidth]{images/examples.png}
+%\caption{Conv + InfoApproximation GAN}
+%\label{answers3}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Оценка ответов моделей}
+Ответы моделей при контексте 
+
+["Hello" \, "Hello" \, "What is your name ?"]
+
+\begin{figure}[ht]
+\includegraphics[width=0.95\textwidth]{images/answers1.png}
+\caption{LSTM + Attention GAN}
+\label{answers1}
+\end{figure}
+
+\begin{figure}[ht]
+\includegraphics[width=0.95\textwidth]{images/answers2.png}
+\caption{ConvGAN}
+\label{answers2}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Оценка ответов моделей}
+
+\begin{figure}[ht]
+\includegraphics[width=0.95\textwidth]{images/answers3.png}
+\caption{Conv + InfoApproximation GAN}
+\label{answers3}
+\end{figure}
+
+\end{frame}
+
+%\begin{frame} {Action-value функция}
+
+%$Q_{D_\phi }^{G_\phi}(s=Y_{1:t-1}, a=y_t)$ = 
+ %\begin{equation}
+%\begin{cases}
+ %         \frac{1}{N}\sum_{n=1}^N D_\phi(Y_{1:T}^n), ~Y_{1:T} \in MC^{G_\beta}(Y_{1:t}, N) ~for~ t < T \\
+   %     D_\phi(Y_{1:T}) ~for~ t=T.
+%\end{cases}
+%\end{equation}
+
+%\end{frame}
+
+
+
+%----------------------------------------------------------------------------------------------------------
+
+\begin{frame}{Выводы}
+\begin{itemize}
+\item Модели на основе соперничающих нейронных сетей дают сопоставимые с базовой моделью результаты по метрике оценивания языковых моделей
+\item Дискриминаторы на основе CNN более сильные по AdvSucc и обучаются быстрее, так как меньшее число параметров.
+\item Обучение с максимизацией информации между one-hot вектором имени и ответом улучшает количество правильных ответов на вопрос об имени и качество ответа.
+\end{itemize}
+\end{frame}
+%----------------------------------------------------------------------------------------------------------
+
+\begin{frame}{Литература}
+	\begin{enumerate}
+		\item Iulian V. Serban, Alessandro Sordoni, Yoshua Bengio, Aaron Courville and Joelle Pineau.Building End-To-End Dialogue Systems Using Generative Hierarchical Neural Network Models, 2015.
+		\item Jiwei Li, Michel Galley, Chris Brockett, Georgios P. Spithourakis, Jianfeng Gao, Bill Dolan. A Persona-Based Neural Conversation Model, 2016.
+		
+		\item Lantao Yu, Weinan Zhang, Jun Wang, Yong Yu. SeqGAN: Sequence Generative Adversarial Nets with Policy Gradient, 2016.
+		\item Xi Chen, Yan Duan, Rein Houthooft, John Schulman, Ilya Sutskever, Pieter Abbeel. InfoGAN: Interpretable Representation Learning by Information Maximizing Generative Adversarial Nets, 2016.
+	\end{enumerate}
+\end{frame}
+%---------------------------------------------------------
+
+\end{document} 
